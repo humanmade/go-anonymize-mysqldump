@@ -167,8 +167,6 @@ func init() {
 }
 
 func main() {
-	logrus.Debug("Will only be visible if the loglevel permits it")
-
 	// if len(os.Args) < 2 {
 	// fmt.Fprintln(os.Stderr, "Usage: anonymize-mysqldump <config>")
 	// os.Exit(1)
@@ -237,6 +235,7 @@ func processLine(line string) string {
 		// TODO Add line number to log
 		logrus.WithFields(logrus.Fields{
 			"error": err,
+			"line":  line,
 		}).Error("Failed parsing line with error: ")
 		return line
 	}
@@ -291,9 +290,6 @@ func applyConfigToInserts(stmt *sqlparser.Insert, config Config) (*sqlparser.Ins
 		return stmt, nil
 	}
 
-	logrus.WithFields(logrus.Fields{
-		"statement": stmt,
-	}).Error("Failed recompiling statement: ")
 	// Iterate over the specified configs and see if this statement matches any
 	// of the desired changes
 	// TODO make this use goroutines
