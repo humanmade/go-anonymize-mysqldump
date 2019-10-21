@@ -22,11 +22,19 @@ type ConfigPattern struct {
 }
 
 type PatternField struct {
-	Field    string
-	Type     string
-	Position int
+	Field       string
+	Position    int
+	Type        string
+	Constraints []PatternFieldConstraint
 }
 
+type PatternFieldConstraint struct {
+	Field    string
+	Position int
+	Value    string
+}
+
+// TODO Should we add validation that enforces only one ConfigPattern per Table?
 var (
 	WordPressConfig = Config{
 		Patterns: []ConfigPattern{
@@ -34,55 +42,110 @@ var (
 				TableName: "wp_users",
 				Fields: []PatternField{
 					{
-						Field:    "user_login",
-						Type:     "username",
-						Position: 2,
+						Field:       "user_login",
+						Type:        "username",
+						Position:    2,
+						Constraints: nil,
 					},
 					{
-						Field:    "user_pass",
-						Type:     "password",
-						Position: 3,
+						Field:       "user_pass",
+						Type:        "password",
+						Position:    3,
+						Constraints: nil,
 					},
 					{
-						Field:    "user_nicename",
-						Type:     "username",
-						Position: 4,
+						Field:       "user_nicename",
+						Type:        "username",
+						Position:    4,
+						Constraints: nil,
 					},
 					{
-						Field:    "user_email",
-						Type:     "email",
-						Position: 5,
+						Field:       "user_email",
+						Type:        "email",
+						Position:    5,
+						Constraints: nil,
 					},
 					{
-						Field:    "user_url",
-						Type:     "url",
-						Position: 6,
+						Field:       "user_url",
+						Type:        "url",
+						Position:    6,
+						Constraints: nil,
 					},
 					{
-						Field:    "display_name",
-						Type:     "name",
-						Position: 10,
+						Field:       "display_name",
+						Type:        "name",
+						Position:    10,
+						Constraints: nil,
 					},
 				},
 			},
 			// TODO Hmm, usermeta is going to be a challenge because there's only one
-			// colum we want to change, but it requires knowledge of another field to
+			// column we want to change, but it requires knowledge of another field to
 			// trigger a modification 🤔
-			// {
-			// TableName: "wp_usermeta",
-			// Fields: []MultiPatternField{
-			// {
-			// Field:    "meta_value",
-			// Type:     "multi",
-			// Position: 4,
-			// Patterns: []MultiPattern{
-			// {
-			// }
-			// },
-			// },
-			// },
-			// },
+			{
+				TableName: "wp_usermeta",
+				Fields: []PatternField{
+					{
+						Field:    "meta_value",
+						Position: 4,
+						Type:     "firstName",
+						Constraints: []PatternFieldConstraint{
+							{
+								Field:    "meta_key",
+								Position: 3,
+								Value:    "first_name",
+							},
+						},
+					},
+					{
+						Field:    "meta_value",
+						Position: 4,
+						Type:     "lastName",
+						Constraints: []PatternFieldConstraint{
+							{
+								Field:    "meta_key",
+								Position: 3,
+								Value:    "last_name",
+							},
+						},
+					},
+					{
+						Field:    "meta_value",
+						Position: 4,
+						Type:     "firstName",
+						Constraints: []PatternFieldConstraint{
+							{
+								Field:    "meta_key",
+								Position: 3,
+								Value:    "nickname",
+							},
+						},
+					},
+					{
+						Field:    "meta_value",
+						Position: 4,
+						Type:     "paragraph",
+						Constraints: []PatternFieldConstraint{
+							{
+								Field:    "meta_key",
+								Position: 3,
+								Value:    "description",
+							},
+						},
+					},
+				},
+			},
 		},
+	}
+	transformationFunctionMap = map[string]func(*sqlparser.SQLVal) *sqlparser.SQLVal{
+		"username":  generateUsername,
+		"password":  generatePassword,
+		"email":     generateEmail,
+		"url":       generateURL,
+		"name":      generateName,
+		"firstName": generateFirstName,
+		"lastName":  generateLastName,
+		"paragraph": generateParagraph,
 	}
 )
 
@@ -183,29 +246,49 @@ func parseLine(line string) (sqlparser.Statement, error) {
 
 func applyConfigToParsedLine(stmt sqlparser.Statement, config Config) (sqlparser.Statement, error) {
 
-	// We have to use a switch here to avoid compile-time errors
-	switch s := stmt.(type) {
-	case *sqlparser.Insert:
-		modified, err := applyConfigToInserts(s, config)
-		if err != nil {
-			return nil, err
-		}
-		return modified, nil
-
-	default:
-		// ignore all other statements
+	insert, isInsertStatement := stmt.(*sqlparser.Insert)
+	if !isInsertStatement {
+		// Let's skip other statements as we only want to process inserts.
 		return stmt, nil
 	}
+
+	modified, err := applyConfigToInserts(insert, config)
+	if err != nil {
+		// Log error and move on
+		fmt.Fprintf(os.Stderr, "foobar")
+		return stmt, nil
+	}
+	return modified, nil
 }
 
 func applyConfigToInserts(stmt *sqlparser.Insert, config Config) (*sqlparser.Insert, error) {
 
-	if values, ok := stmt.Rows.(sqlparser.Values); ok {
-		newValues, err := modifyValues(values, config)
-		if err != nil {
-			return nil, err
+	values, isValuesSlice := stmt.Rows.(sqlparser.Values)
+	if !isValuesSlice {
+		// This _should_ have type Values, but if it doesn't, let's skip it
+		// TODO Perhaps worth logging when this happens?
+		return stmt, nil
+	}
+
+	fmt.Printf("%+#v\n", stmt)
+	// Iterate over the specified configs and see if this statement matches any
+	// of the desired changes
+	// TODO make this use goroutines
+	for _, pattern := range config.Patterns {
+		if stmt.Table.Name.String() != pattern.TableName {
+			// Config is not for this table, move onto next available config
+			continue
 		}
 
+		// Ok, now it's time to make some modifications
+		fmt.Print("testing")
+		fmt.Printf("%+#v\n", pattern)
+
+		newValues, err := modifyValues(values, pattern)
+		if err != nil {
+			// TODO Perhaps worth logging when this happens?
+			return stmt, nil
+		}
 		stmt.Rows = newValues
 	}
 
@@ -214,26 +297,70 @@ func applyConfigToInserts(stmt *sqlparser.Insert, config Config) (*sqlparser.Ins
 
 // TODO we're gonna have to figure out how to retain types if we ever want to
 // mask number-based fields
-func modifyValues(values sqlparser.Values, config Config) (sqlparser.Values, error) {
-	fmt.Printf("%+#v\n", values)
-	for _, row := range values {
-		for _, n := range row {
-			if value, ok := n.(*sqlparser.SQLVal); ok {
-				switch value.Type {
-				case sqlparser.IntVal, sqlparser.StrVal:
-					fmt.Printf("%+#v\n", string(value.Val))
-				default:
-				}
+func modifyValues(values sqlparser.Values, pattern ConfigPattern) (sqlparser.Values, error) {
 
-				// fmt.Printf("%+#v\n", string(value.Val))
+	// TODO make this use goroutines
+	for row := range values {
+		// TODO make this use goroutines
+		for _, fieldPattern := range pattern.Fields {
+			// Position is 1 indexed instead of 0, so let's subtract 1 in order to get
+			// it to line up with the value inside the ValTuple inside of values.Values
+			valTupleIndex := fieldPattern.Position - 1
+			value := values[row][valTupleIndex].(*sqlparser.SQLVal)
+
+			// Skip transformation if transforming function doesn't exist
+			if transformationFunctionMap[fieldPattern.Type] == nil {
+				// TODO in the event a transformation function isn't correctly defined,
+				// should we actually exit? Should we exit or fail softly whenever
+				// something goes wrong in general?
+				fmt.Fprintf(os.Stderr, "Failed applying transformation type '%s' for field '%s'.\n", fieldPattern.Type, fieldPattern.Field)
+				continue
 			}
+
+			// Skipping applying a transformation because field is empty
+			if len(value.Val) == 0 {
+				continue
+			}
+
+			// Skip this PatternField if none of its constraints match
+			if fieldPattern.Constraints != nil && !rowObeysConstraints(fieldPattern.Constraints, values[row]) {
+				continue
+			}
+
+			values[row][valTupleIndex] = transformationFunctionMap[fieldPattern.Type](value)
 		}
+
 	}
+
+	// values[0][0] = sqlparser.NewStrVal([]byte("Foobar"))
 	return values, nil
 }
 
-// TODO update to have query include bound variables
-// TODO add replacements to bound variables
+func rowObeysConstraints(constraints []PatternFieldConstraint, row sqlparser.ValTuple) bool {
+	for _, constraint := range constraints {
+		valTupleIndex := constraint.Position - 1
+		value := row[valTupleIndex].(*sqlparser.SQLVal)
+
+		parsedValue := convertSQLValToString(value)
+		fmt.Fprintf(os.Stderr, "parsedValue: %+#v, constraint.Value: %+#v\n", parsedValue, constraint.Value)
+		if parsedValue != constraint.Value {
+			return false
+		}
+	}
+	return true
+}
+
+func convertSQLValToString(value *sqlparser.SQLVal) string {
+	buf := sqlparser.NewTrackedBuffer(nil)
+	buf.Myprintf("%s", []byte(value.Val))
+	pq := buf.ParsedQuery()
+
+	bytes, err := pq.GenerateQuery(nil, nil)
+	if err != nil {
+		return ""
+	}
+	return string(bytes)
+}
 func recompileStatementToSQL(stmt sqlparser.Statement) (string, error) {
 	// TODO Potentially replace with BuildParsedQuery
 	buf := sqlparser.NewTrackedBuffer(nil)
