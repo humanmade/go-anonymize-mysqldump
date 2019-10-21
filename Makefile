@@ -21,7 +21,7 @@ test:
 	go test -bench .
 
 test-watch:
-	fswatch -0 *.go | xargs -0 -n 1 -I % ./bin/test-file.sh %
+	fswatch -0 *.go | xargs -0 -L 1 -I % go test -v ./...
 
 clean:
 	rm -rf ${BUILDDIR}
