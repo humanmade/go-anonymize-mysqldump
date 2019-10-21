@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"github.com/xwb1989/sqlparser"
 	"io"
 	"os"
@@ -149,7 +150,24 @@ var (
 	}
 )
 
+// Many thanks to https://stackoverflow.com/a/47515580/1454045
+func init() {
+	lvl, ok := os.LookupEnv("LOG_LEVEL")
+	// LOG_LEVEL not set, let's default to info
+	if !ok {
+		lvl = "info"
+	}
+	// parse string, this is built-in feature of logrus
+	ll, err := logrus.ParseLevel(lvl)
+	if err != nil {
+		ll = logrus.InfoLevel
+	}
+	// set global log level
+	logrus.SetLevel(ll)
+}
+
 func main() {
+	logrus.Debug("Will only be visible if the loglevel permits it")
 
 	// if len(os.Args) < 2 {
 	// fmt.Fprintln(os.Stderr, "Usage: anonymize-mysqldump <config>")
@@ -196,7 +214,7 @@ func processFile(wg *sync.WaitGroup, lines chan chan string) {
 		}
 
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
+			logrus.Error(err.Error())
 			break
 		}
 
@@ -217,7 +235,9 @@ func processLine(line string) string {
 	parsed, err := parseLine(line)
 	if err != nil {
 		// TODO Add line number to log
-		fmt.Fprintf(os.Stderr, "Failed parsing line with error: %v\n", err)
+		logrus.WithFields(logrus.Fields{
+			"error": err,
+		}).Error("Failed parsing line with error: ")
 		return line
 	}
 
@@ -229,7 +249,9 @@ func processLine(line string) string {
 	recompiled, err := recompileStatementToSQL(processed)
 	if err != nil {
 		// TODO Add line number to log
-		fmt.Fprintf(os.Stderr, "Failed recompiling line with error: %v\n", err)
+		logrus.WithFields(logrus.Fields{
+			"error": err,
+		}).Error("Failed recompiling line with error: ")
 		return line
 	}
 	return recompiled
@@ -254,8 +276,7 @@ func applyConfigToParsedLine(stmt sqlparser.Statement, config Config) (sqlparser
 
 	modified, err := applyConfigToInserts(insert, config)
 	if err != nil {
-		// Log error and move on
-		fmt.Fprintf(os.Stderr, "foobar")
+		// TODO Log error and move on
 		return stmt, nil
 	}
 	return modified, nil
@@ -270,7 +291,9 @@ func applyConfigToInserts(stmt *sqlparser.Insert, config Config) (*sqlparser.Ins
 		return stmt, nil
 	}
 
-	fmt.Printf("%+#v\n", stmt)
+	logrus.WithFields(logrus.Fields{
+		"statement": stmt,
+	}).Error("Failed recompiling statement: ")
 	// Iterate over the specified configs and see if this statement matches any
 	// of the desired changes
 	// TODO make this use goroutines
@@ -281,9 +304,6 @@ func applyConfigToInserts(stmt *sqlparser.Insert, config Config) (*sqlparser.Ins
 		}
 
 		// Ok, now it's time to make some modifications
-		fmt.Print("testing")
-		fmt.Printf("%+#v\n", pattern)
-
 		newValues, err := modifyValues(values, pattern)
 		if err != nil {
 			// TODO Perhaps worth logging when this happens?
@@ -313,7 +333,10 @@ func modifyValues(values sqlparser.Values, pattern ConfigPattern) (sqlparser.Val
 				// TODO in the event a transformation function isn't correctly defined,
 				// should we actually exit? Should we exit or fail softly whenever
 				// something goes wrong in general?
-				fmt.Fprintf(os.Stderr, "Failed applying transformation type '%s' for field '%s'.\n", fieldPattern.Type, fieldPattern.Field)
+				logrus.WithFields(logrus.Fields{
+					"type":  fieldPattern.Type,
+					"field": fieldPattern.Field,
+				}).Error("Failed applying transformation type for field")
 				continue
 			}
 
@@ -342,7 +365,10 @@ func rowObeysConstraints(constraints []PatternFieldConstraint, row sqlparser.Val
 		value := row[valTupleIndex].(*sqlparser.SQLVal)
 
 		parsedValue := convertSQLValToString(value)
-		fmt.Fprintf(os.Stderr, "parsedValue: %+#v, constraint.Value: %+#v\n", parsedValue, constraint.Value)
+		logrus.WithFields(logrus.Fields{
+			"parsedValue":      parsedValue,
+			"constraint.value": constraint.Value,
+		}).Debug("Debuging constraint obediance: ")
 		if parsedValue != constraint.Value {
 			return false
 		}

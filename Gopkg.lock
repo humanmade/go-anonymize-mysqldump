@@ -2,6 +2,22 @@
 
 
 [[projects]]
+  digest = "1:31e761d97c76151dde79e9d28964a812c46efc5baee4085b86f68f0c654450de"
+  name = "github.com/konsorten/go-windows-terminal-sequences"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "f55edac94c9bbba5d6182a4be46d86a2c9b5b50e"
+  version = "v1.0.2"
+
+[[projects]]
+  digest = "1:04457f9f6f3ffc5fea48e71d62f2ca256637dee0a04d710288e27e05c8b41976"
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "839c75faf7f98a33d445d181f3018b5c3409a45e"
+  version = "v1.4.2"
+
+[[projects]]
   branch = "master"
   digest = "1:c364e1046df58e7c1731edd337145461011d129bbb876932d9e5bbf105d07888"
   name = "github.com/xwb1989/sqlparser"
@@ -15,9 +31,20 @@
   pruneopts = "UT"
   revision = "120387863bf27d04bc07db8015110a6e96d0146c"
 
+[[projects]]
+  branch = "master"
+  digest = "1:70b2bf25c4ed23c61dae668e4151d87a7edc5965bc3ccfecd1b9fe5f1752092a"
+  name = "golang.org/x/sys"
+  packages = ["unix"]
+  pruneopts = "UT"
+  revision = "3e7259c5e7c2076bb2728047a3df75adb1bad8e5"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  input-imports = ["github.com/xwb1989/sqlparser"]
+  input-imports = [
+    "github.com/sirupsen/logrus",
+    "github.com/xwb1989/sqlparser",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1
