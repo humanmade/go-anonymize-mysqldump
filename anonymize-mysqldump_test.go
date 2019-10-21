@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"syreclabs.com/go/faker"
 	"testing"
 )
@@ -19,6 +18,14 @@ var (
 
 func init() {
 	faker.Seed(432)
+}
+
+func BenchmarkProcessLine(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		processLine(usersQuery)
+		processLine(userMetaQuery)
+		processLine(commentsQuery)
+	}
 }
 
 func TestApplyConfigToQuery(t *testing.T) {
@@ -48,7 +55,6 @@ func TestApplyConfigToQuery(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.testName, func(t *testing.T) {
 			line := processLine(test.line)
-			fmt.Printf("%+#v\n", line)
 			if line != test.wants {
 				t.Error("\nExpected:\n", test.wants, "\nActual:\n", line)
 			}
