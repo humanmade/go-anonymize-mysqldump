@@ -39,12 +39,24 @@
   pruneopts = "UT"
   revision = "3e7259c5e7c2076bb2728047a3df75adb1bad8e5"
 
+[[projects]]
+  digest = "1:bfba45a9ecebca541d3918aa796b02ecd14b708bab47061b22cb5849bc9ee844"
+  name = "syreclabs.com/go/faker"
+  packages = [
+    ".",
+    "locales",
+  ]
+  pruneopts = "UT"
+  revision = "ca5d017134d0604dc3ba912dd6de98d6b27b6444"
+  version = "v1.2.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
     "github.com/sirupsen/logrus",
     "github.com/xwb1989/sqlparser",
+    "syreclabs.com/go/faker",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
