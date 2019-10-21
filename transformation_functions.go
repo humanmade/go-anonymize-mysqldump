@@ -9,6 +9,7 @@ func generateUsername(value *sqlparser.SQLVal) *sqlparser.SQLVal {
 }
 
 func generatePassword(value *sqlparser.SQLVal) *sqlparser.SQLVal {
+	// TODO encrypt this value
 	return sqlparser.NewStrVal([]byte("foobar"))
 }
 
@@ -34,4 +35,8 @@ func generateLastName(value *sqlparser.SQLVal) *sqlparser.SQLVal {
 
 func generateParagraph(value *sqlparser.SQLVal) *sqlparser.SQLVal {
 	return sqlparser.NewStrVal([]byte("Foo bar baz quz."))
+}
+
+func generateIPv4(value *sqlparser.SQLVal) *sqlparser.SQLVal {
+	return sqlparser.NewStrVal([]byte("12.34.56.78"))
 }

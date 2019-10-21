@@ -80,9 +80,6 @@ var (
 					},
 				},
 			},
-			// TODO Hmm, usermeta is going to be a challenge because there's only one
-			// column we want to change, but it requires knowledge of another field to
-			// trigger a modification 🤔
 			{
 				TableName: "wp_usermeta",
 				Fields: []PatternField{
@@ -136,6 +133,35 @@ var (
 					},
 				},
 			},
+			{
+				TableName: "wp_comments",
+				Fields: []PatternField{
+					{
+						Field:       "comment_author",
+						Type:        "username",
+						Position:    3,
+						Constraints: nil,
+					},
+					{
+						Field:       "comment_author_email",
+						Type:        "email",
+						Position:    4,
+						Constraints: nil,
+					},
+					{
+						Field:       "comment_author_url",
+						Type:        "url",
+						Position:    5,
+						Constraints: nil,
+					},
+					{
+						Field:       "comment_author_IP",
+						Type:        "ipv4",
+						Position:    6,
+						Constraints: nil,
+					},
+				},
+			},
 		},
 	}
 	transformationFunctionMap = map[string]func(*sqlparser.SQLVal) *sqlparser.SQLVal{
@@ -147,6 +173,7 @@ var (
 		"firstName": generateFirstName,
 		"lastName":  generateLastName,
 		"paragraph": generateParagraph,
+		"ipv4":      generateIPv4,
 	}
 )
 
