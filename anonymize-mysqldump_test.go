@@ -18,13 +18,14 @@ var (
 
 func init() {
 	faker.Seed(432)
+	jsonConfig = readConfigFile("./config.example.json")
 }
 
 func BenchmarkProcessLine(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		processLine(usersQuery)
-		processLine(userMetaQuery)
-		processLine(commentsQuery)
+		processLine(usersQuery, jsonConfig)
+		processLine(userMetaQuery, jsonConfig)
+		processLine(commentsQuery, jsonConfig)
 	}
 }
 
@@ -54,7 +55,7 @@ func TestApplyConfigToQuery(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.testName, func(t *testing.T) {
-			line := processLine(test.line)
+			line := processLine(test.line, jsonConfig)
 			if line != test.wants {
 				t.Error("\nExpected:\n", test.wants, "\nActual:\n", line)
 			}

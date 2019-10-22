@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/akamensky/argparse"
 	"github.com/sirupsen/logrus"
 	"github.com/xwb1989/sqlparser"
 	"io"
+	"io/ioutil"
 	"os"
 	"strings"
 	"sync"
@@ -65,20 +67,13 @@ func init() {
 }
 
 func main() {
-	// if len(os.Args) < 2 {
-	// fmt.Fprintln(os.Stderr, "Usage: anonymize-mysqldump <config>")
-	// os.Exit(1)
-	// return
-	// }
-
-	// config := loadConfiguration(os.Args[1])
-	// fmt.Println(config)
+	config := parseArgs()
 
 	var wg sync.WaitGroup
 	lines := make(chan chan string, 10)
 
 	wg.Add(1)
-	go processFile(&wg, lines)
+	go processFile(&wg, lines, config)
 
 	go func() {
 		wg.Wait()
@@ -90,15 +85,35 @@ func main() {
 	}
 }
 
-func loadConfiguration(jsonConfig string) Config {
+func parseArgs() Config {
+	parser := argparse.NewParser("anonymize-mysqldump", "Reads SQL from STDIN and replaces content for anonymity based on the provided config.")
+	configFilePath := parser.String("c", "config", &argparse.Options{Required: true, Help: "Path to config.json"})
+
+	err := parser.Parse(os.Args)
+	if err != nil {
+		// In case of error print error and print usage
+		// This can also be done by passing -h or --help flags
+		fmt.Print(parser.Usage(err))
+		os.Exit(1)
+	}
+
+	return readConfigFile(*configFilePath)
+}
+
+func readConfigFile(filepath string) Config {
+	jsonConfig, err := ioutil.ReadFile(filepath)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
 	var decoded Config
-	jsonReader := strings.NewReader(jsonConfig)
+	jsonReader := strings.NewReader(string(jsonConfig))
 	jsonParser := json.NewDecoder(jsonReader)
 	jsonParser.Decode(&decoded)
 	return decoded
 }
 
-func processFile(wg *sync.WaitGroup, lines chan chan string) {
+func processFile(wg *sync.WaitGroup, lines chan chan string, config Config) {
 	defer wg.Done()
 
 	r := bufio.NewReaderSize(os.Stdin, 2*1024*1024)
@@ -120,13 +135,13 @@ func processFile(wg *sync.WaitGroup, lines chan chan string) {
 
 		go func(line string) {
 			defer wg.Done()
-			line = processLine(line)
+			line = processLine(line, config)
 			ch <- line
 		}(line)
 	}
 }
 
-func processLine(line string) string {
+func processLine(line string, config Config) string {
 
 	parsed, err := parseLine(line)
 	if err != nil {
@@ -139,7 +154,7 @@ func processLine(line string) string {
 	}
 
 	// TODO Detect if line matches pattern
-	processed, err := applyConfigToParsedLine(parsed, WordPressConfig)
+	processed, err := applyConfigToParsedLine(parsed, config)
 	// TODO make modifications
 
 	// TODO Return changes

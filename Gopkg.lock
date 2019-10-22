@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  branch = "master"
+  digest = "1:1dfdb9db4498d86614fae3f80a8403ec3904f185b0aa4017f9daef4592b4ac0b"
+  name = "github.com/akamensky/argparse"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "1427fe674291a5bc6e207d6bf968cb189205dc75"
+
+[[projects]]
   digest = "1:31e761d97c76151dde79e9d28964a812c46efc5baee4085b86f68f0c654450de"
   name = "github.com/konsorten/go-windows-terminal-sequences"
   packages = ["."]
@@ -54,6 +62,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/akamensky/argparse",
     "github.com/sirupsen/logrus",
     "github.com/xwb1989/sqlparser",
     "syreclabs.com/go/faker",
