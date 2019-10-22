@@ -1,0 +1,127 @@
+{
+  "patterns": [
+    {
+      "tableName": "wp_users",
+      "fields": [
+        {
+          "field": "user_login",
+          "position": 2,
+          "type": "username",
+          "constraints": null
+        },
+        {
+          "field": "user_pass",
+          "position": 3,
+          "type": "password",
+          "constraints": null
+        },
+        {
+          "field": "user_nicename",
+          "position": 4,
+          "type": "username",
+          "constraints": null
+        },
+        {
+          "field": "user_email",
+          "position": 5,
+          "type": "email",
+          "constraints": null
+        },
+        {
+          "field": "user_url",
+          "position": 6,
+          "type": "url",
+          "constraints": null
+        },
+        {
+          "field": "display_name",
+          "position": 10,
+          "type": "name",
+          "constraints": null
+        }
+      ]
+    },
+    {
+      "tableName": "wp_usermeta",
+      "fields": [
+        {
+          "field": "meta_value",
+          "position": 4,
+          "type": "firstName",
+          "constraints": [
+            {
+              "field": "meta_key",
+              "position": 3,
+              "value": "first_name"
+            }
+          ]
+        },
+        {
+          "field": "meta_value",
+          "position": 4,
+          "type": "lastName",
+          "constraints": [
+            {
+              "field": "meta_key",
+              "position": 3,
+              "value": "last_name"
+            }
+          ]
+        },
+        {
+          "field": "meta_value",
+          "position": 4,
+          "type": "firstName",
+          "constraints": [
+            {
+              "field": "meta_key",
+              "position": 3,
+              "value": "nickname"
+            }
+          ]
+        },
+        {
+          "field": "meta_value",
+          "position": 4,
+          "type": "paragraph",
+          "constraints": [
+            {
+              "field": "meta_key",
+              "position": 3,
+              "value": "description"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tableName": "wp_comments",
+      "fields": [
+        {
+          "field": "comment_author",
+          "position": 3,
+          "type": "username",
+          "constraints": null
+        },
+        {
+          "field": "comment_author_email",
+          "position": 4,
+          "type": "email",
+          "constraints": null
+        },
+        {
+          "field": "comment_author_url",
+          "position": 5,
+          "type": "url",
+          "constraints": null
+        },
+        {
+          "field": "comment_author_IP",
+          "position": 6,
+          "type": "ipv4",
+          "constraints": null
+        }
+      ]
+    }
+  ]
+}
