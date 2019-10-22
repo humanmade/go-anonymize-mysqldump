@@ -8,7 +8,7 @@ build:
 	gzip build/*
 
 vet:
-	go vet ./...
+	go get -v -t -d ./...
 
 fmt:
 	gofmt -s -l . | grep -v vendor | tee /dev/stderr
