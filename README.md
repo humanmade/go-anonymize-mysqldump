@@ -1,5 +1,7 @@
 # `anonymize-mysqldump`
 
+[![CircleCI](https://circleci.com/gh/humanmade/go-anonymize-mysqldump/tree/master.svg?style=svg)](https://circleci.com/gh/humanmade/go-anonymize-mysqldump/tree/master)
+
 Allows you to pipe data from `mysqldump` or an SQL file and anonymize it:
 
 ```sh
