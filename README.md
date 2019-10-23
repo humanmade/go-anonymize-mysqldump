@@ -8,6 +8,18 @@ Allows you to pipe data from `mysqldump` or an SQL file and anonymize it:
 mysqldump -u yada -pbadpass -h db | anonymize-mysqldump --config config.json > anonymized.sql
 ```
 
+```
+usage: anonymize-mysqldump [-h|--help] -c|--config "<value>"
+
+                           Reads SQL from STDIN and replaces content for
+                           anonymity based on the provided config.
+
+Arguments:
+
+  -h  --help    Print help information
+  -c  --config  Path to config.json
+```
+
 ## Installation
 
 You can download the binary for your system from the [Releases](https://github.com/humanmade/go-anonymize-mysqldump/releases/) page. Once downloaded and `gunzip`'d, move it to a location in your path such as `/usr/local/bin` and make it executable. For instance, to download the MacOS binary for 64 bit platforms (this is most common):
@@ -21,18 +33,16 @@ chmod +x /usr/local/bin/anonymize-mysqldump
 
 ## Usage
 
-This tool is designed to read a file stream over STDIN and produce an output over STDOUT. A config file is required and can be provided via the `-c` or `--config` flag. An example config for anonymizing a WordPress database is provided at [`config.example.json`](./config.example.json).
+This tool is designed to read a file stream over STDIN and produce an output over STDOUT. A config file is required and can be provided via the `-c` or `--config` flag. An example config for anonymizing a WordPress database is provided at [`config.example.json`](./config.example.json):
 
+```sh
+curl -LO https://raw.githubusercontent.com/humanmade/go-anonymize-mysqldump/master/config.example.json
 ```
-usage: anonymize-mysqldump [-h|--help] -c|--config "<value>"
 
-                           Reads SQL from STDIN and replaces content for
-                           anonymity based on the provided config.
+Whenever the tool experiences an error, it will output a log to STDERR. If you wish to not see that output while the command is running, redirect it to some other file (or `/dev/null` if you don't care):
 
-Arguments:
-
-  -h  --help    Print help information
-  -c  --config  Path to config.json
+```sh
+mysqldump -u yada -pbadpass -h db | anonymize-mysqldump --config config.json 2> path/to/errors.log > anonymized.sql
 ```
 
 ## Caveats
