@@ -13,7 +13,7 @@ mysqldump -u yada -pbadpass -h db | anonymize-mysqldump --config config.json > a
 You can download the binary for your system from the [Releases](https://github.com/humanmade/go-anonymize-mysqldump/releases/) page. Once downloaded and `gunzip`'d, move it to a location in your path such as `/usr/local/bin` and make it executable. For instance, to download the MacOS binary for 64 bit platforms (this is most common):
 
 ```sh
-curl -OL https://github.com/humanmade/go-anonymize-mysqldump/releases/download/0.1.0/go-anonymize-mysqldump_darwin_amd64.gz
+curl -OL https://github.com/humanmade/go-anonymize-mysqldump/releases/download/latest/go-anonymize-mysqldump_darwin_amd64.gz
 gunzip go-anonymize-mysqldump_darwin_amd64.gz
 mv go-anonymize-mysqldump_darwin_amd64 /usr/local/bin/anonymize-mysqldump
 chmod +x /usr/local/bin/anonymize-mysqldump
