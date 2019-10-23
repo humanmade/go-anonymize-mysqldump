@@ -28,6 +28,13 @@ Arguments:
   -c  --config  Path to config.json
 ```
 
+## Caveats
+
+Important things to be aware of!
+
+- Currently this only modifies `INSERT` statements. Should you wish to modify other fields, feel free to submit a PR.
+- **Verify the output file has been modified.** This is a friendly reminder this tool is still in its early days and you should verify the output sql file before distributing it to ensure the desired modifications have been applied.
+
 ## Config File
 
 An example config for anonymizing a WordPress database is provided at [`config.example.json`](./config.example.json).
