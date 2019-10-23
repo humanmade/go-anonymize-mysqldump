@@ -69,7 +69,7 @@ Supposing you have a WordPress database and you need to modify certain meta, be 
 
 ### Field Types
 
-Each column stores a certain type of data, be it a name, username, email, etc. The `type` property in the config is used to define the type of data stored, and ultimately the type of random data to be inserted into the field. These are the types currently supported:
+Each column stores a certain type of data, be it a name, username, email, etc. The `type` property in the config is used to define the type of data stored, and ultimately the type of random data to be inserted into the field. [https://github.com/dmgk/faker](https://github.com/dmgk/faker) is used for generating the fake data. These are the types currently supported:
 
 - `username`
 - `password`
