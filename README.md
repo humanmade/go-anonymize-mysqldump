@@ -8,6 +8,10 @@ Allows you to pipe data from `mysqldump` or an SQL file and anonymize it:
 mysqldump -u yada -pbadpass -h db | anonymize-mysqldump --config config.json > anonymized.sql
 ```
 
+## Installation
+
+You can download the binary for your system from the [Releases](https://github.com/humanmade/go-anonymize-mysqldump/releases/) page. Once downloaded and `gunzip`'d, move it to a location in your path such as `/usr/local/bin`.
+
 ## Usage
 
 This tool is designed to read a file stream over STDIN and produce an output over STDOUT. A config file is required and can be provided via the `-c` or `--config` flag. An example config for anonymizing a WordPress database is provided at [`config.example.json`](./config.example.json).
