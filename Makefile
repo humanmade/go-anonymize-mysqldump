@@ -4,7 +4,7 @@ BUILDDIR = ./build
 all: clean vet fmt lint test build
 
 build:
-	gox -os="linux" -os="darwin" -arch="amd64" -output="${BUILDDIR}/${BINARY}_{{.OS}}_{{.Arch}}"
+	gox -os="linux" -os="darwin" -os="windows" -arch="amd64" -arch="386" -output="${BUILDDIR}/${BINARY}_{{.OS}}_{{.Arch}}"
 	gzip build/*
 
 vet:
