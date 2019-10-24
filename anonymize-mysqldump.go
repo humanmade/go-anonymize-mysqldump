@@ -69,20 +69,25 @@ func init() {
 func main() {
 	config := parseArgs()
 
+	lines := setupAndProcessInput(config, os.Stdin)
+
+	for line := range lines {
+		fmt.Print(<-line)
+	}
+}
+
+func setupAndProcessInput(config Config, input io.Reader) chan chan string {
 	var wg sync.WaitGroup
 	lines := make(chan chan string, 10)
 
 	wg.Add(1)
-	go processFile(&wg, lines, config)
+	go processInput(&wg, input, lines, config)
 
 	go func() {
 		wg.Wait()
 		close(lines)
 	}()
-
-	for line := range lines {
-		fmt.Print(<-line)
-	}
+	return lines
 }
 
 func parseArgs() Config {
@@ -113,21 +118,53 @@ func readConfigFile(filepath string) Config {
 	return decoded
 }
 
-func processFile(wg *sync.WaitGroup, lines chan chan string, config Config) {
+func processInput(wg *sync.WaitGroup, input io.Reader, lines chan chan string, config Config) {
 	defer wg.Done()
 
-	r := bufio.NewReaderSize(os.Stdin, 2*1024*1024)
+	r := bufio.NewReaderSize(input, 2*1024*1024)
+	var nextLine string
+	insertStarted := false
 	for {
 		line, err := r.ReadString('\n')
 
-		if err == io.EOF {
-			break
-		}
-
-		if err != nil {
+		// First, let's check for any non-EOF errors and break
+		if err != nil && err != io.EOF {
 			logrus.Error(err.Error())
 			break
 		}
+
+		// If the line is empty, just skip it
+		if len(line) == 0 {
+			if err == io.EOF {
+				break
+			}
+			continue
+		}
+
+		// clean up whitespace
+		line = strings.TrimSpace(line)
+
+		// Test if this is an INSERT query. We'll use this to determine if we need
+		// to concatenate lines together if they're spread apart multiple lines
+		// instead of on a single line
+		maybeInsert := strings.ToUpper(line[:6]) == "INSERT"
+		if maybeInsert {
+			insertStarted = true
+		}
+
+		// Now that we've detected this is an INSERT query, let's append the lines
+		// together to form a single line in the event this spans multiple lines
+		if insertStarted {
+			nextLine += line
+		}
+
+		lastCharacter := line[len(line)-1:]
+		if lastCharacter != ";" && insertStarted {
+			continue
+		}
+
+		// Let's reset
+		insertStarted = false
 
 		wg.Add(1)
 		ch := make(chan string)
@@ -137,7 +174,14 @@ func processFile(wg *sync.WaitGroup, lines chan chan string, config Config) {
 			defer wg.Done()
 			line = processLine(line, config)
 			ch <- line
-		}(line)
+		}(nextLine)
+
+		// We wait until the very end to check if EOF because we may have reached
+		// EOF and `line` still have a value
+		if err == io.EOF {
+			logrus.Debug("Reached EOF, finished processing.")
+			break
+		}
 	}
 }
 

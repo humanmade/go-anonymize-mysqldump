@@ -17,11 +17,14 @@ lint:
 	golint ./... | grep -v vendor | tee /dev/stderr
 
 test:
-	go test -v ./...
+	LOG_LEVEL=debug go test -v ./...
 	go test -bench .
 
 test-watch:
-	fswatch -0 *.go | xargs -0 -L 1 -I % go test -v ./...
+	fswatch -0 *.go | xargs -0 -L 1 -I % sh -c 'LOG_LEVEL=debug go test -v ./...'
+
+run-test-watch:
+	fswatch -0 *.go | xargs -0 -L 1 -I % sh -c 'LOG_LEVEL=debug go test -v -run $(TEST)'
 
 clean:
 	rm -rf ${BUILDDIR}
