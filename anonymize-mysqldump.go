@@ -87,6 +87,7 @@ func setupAndProcessInput(config Config, input io.Reader) chan chan string {
 		wg.Wait()
 		close(lines)
 	}()
+
 	return lines
 }
 
@@ -124,25 +125,33 @@ func processInput(wg *sync.WaitGroup, input io.Reader, lines chan chan string, c
 	r := bufio.NewReaderSize(input, 2*1024*1024)
 	var nextLine string
 	insertStarted := false
-	for {
+	continueLooping := true
+	for continueLooping {
 		line, err := r.ReadString('\n')
 
-		// First, let's check for any non-EOF errors and break
-		if err != nil && err != io.EOF {
+		if err == io.EOF {
+			// continueLooping is used because line might be populated even when we've
+			// reached the end of the file, so we set a boolean once the last line is
+			// being processed to end the loop.
+			continueLooping = false
+		} else if err != nil {
+			// log any other errors and break
 			logrus.Error(err.Error())
 			break
 		}
 
-		// If the line is empty, just skip it
-		if len(line) == 0 {
-			if err == io.EOF {
-				break
-			}
+		// If the line is shorter than 6 characters, which is the shortest line for
+		// an insert query, let's skip processing it
+		if len(line) < 6 {
+
+			// TODO I'd love to clean this up so we don't make ch in three different
+			// places, but that's a task for another day
+			ch := make(chan string)
+			lines <- ch
+			ch <- line
+			//ch <- line + "\n"
 			continue
 		}
-
-		// clean up whitespace
-		line = strings.TrimSpace(line)
 
 		// Test if this is an INSERT query. We'll use this to determine if we need
 		// to concatenate lines together if they're spread apart multiple lines
@@ -152,37 +161,45 @@ func processInput(wg *sync.WaitGroup, input io.Reader, lines chan chan string, c
 			insertStarted = true
 		}
 
+		line = strings.TrimSpace(line)
 		// Now that we've detected this is an INSERT query, let's append the lines
 		// together to form a single line in the event this spans multiple lines
 		if insertStarted {
 			nextLine += line
-		}
-
-		lastCharacter := line[len(line)-1:]
-		if lastCharacter != ";" && insertStarted {
+		} else {
+			// When it's not an insert query, let's add this line and move on without
+			// processing it
+			// TODO clean this up too
+			ch := make(chan string)
+			lines <- ch
+			ch <- line + "\n"
 			continue
 		}
 
-		// Let's reset
-		insertStarted = false
+		lastCharacter := line[len(line)-1:]
+		if lastCharacter == ";" {
+			insertStarted = false
+		} else {
+			// If we haven't reached a query terminator and and insert query has
+			// begun, let's move on to the next line
+			continue
+		}
 
+		// Now let's actually process the line!
 		wg.Add(1)
 		ch := make(chan string)
 		lines <- ch
-
 		go func(line string) {
 			defer wg.Done()
 			line = processLine(line, config)
 			ch <- line
 		}(nextLine)
 
-		// We wait until the very end to check if EOF because we may have reached
-		// EOF and `line` still have a value
-		if err == io.EOF {
-			logrus.Debug("Reached EOF, finished processing.")
-			break
-		}
+		// Now let's reset nextLine to empty so that it doesn't continue
+		// appending lines forever
+		nextLine = ""
 	}
+
 }
 
 func processLine(line string, config Config) string {
@@ -321,7 +338,7 @@ func rowObeysConstraints(constraints []PatternFieldConstraint, row sqlparser.Val
 		logrus.WithFields(logrus.Fields{
 			"parsedValue":      parsedValue,
 			"constraint.value": constraint.Value,
-		}).Debug("Debuging constraint obediance: ")
+		}).Trace("Debuging constraint obediance: ")
 		if parsedValue != constraint.Value {
 			return false
 		}
