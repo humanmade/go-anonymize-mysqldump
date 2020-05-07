@@ -1,5 +1,6 @@
 package main
 
+// ExampleWordPressConfig - an example config for anonymizing Wordpress dumps
 var ExampleWordPressConfig = Config{
 	Patterns: []ConfigPattern{
 		{

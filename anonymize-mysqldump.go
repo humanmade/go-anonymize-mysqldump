@@ -14,15 +14,18 @@ import (
 	"sync"
 )
 
+// Config - See `./config.example.json`
 type Config struct {
 	Patterns []ConfigPattern `json:"patterns"`
 }
 
+// ConfigPattern - See `./config.example.json`
 type ConfigPattern struct {
 	TableName string         `json:"tableName"`
 	Fields    []PatternField `json:"fields"`
 }
 
+// PatternField - See `./config.example.json`
 type PatternField struct {
 	Field       string                   `json:"field"`
 	Position    int                      `json:"position"`
@@ -30,6 +33,7 @@ type PatternField struct {
 	Constraints []PatternFieldConstraint `json:"constraints"`
 }
 
+// PatternFieldConstraint - See `./config.example.json`
 type PatternFieldConstraint struct {
 	Field    string `json:"field"`
 	Position int    `json:"position"`
