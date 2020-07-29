@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/omnea/faker"
+	"syreclabs.com/go/faker"
 	"github.com/xwb1989/sqlparser"
 	"math/rand"
 	"strings"
