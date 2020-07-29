@@ -27,6 +27,7 @@ type PatternField struct {
 	Field       string                   `json:"field"`
 	Position    int                      `json:"position"`
 	Type        string                   `json:"type"`
+	String        string                   `json:"string"`
 	Constraints []PatternFieldConstraint `json:"constraints"`
 }
 
@@ -70,6 +71,7 @@ var (
 		"customUserToken":      generateCustomUserToken,
 		"libAdditionalAddress": generateLibAdditionalAddress,
 		"customTitle":          generateCustomTitle,
+		"custom"
 	}
 )
 
@@ -341,6 +343,12 @@ func modifyValues(values sqlparser.Values, pattern ConfigPattern) (sqlparser.Val
 			// Skip this PatternField if none of its constraints match
 			if fieldPattern.Constraints != nil && !rowObeysConstraints(fieldPattern.Constraints, values[row]) {
 				continue
+			}
+
+			// Use provided string as value
+			if transformationFunctionMap[fieldPattern.Type] == "custom" {
+				values[row][valTupleIndex] = fieldPattern.String
+				continue;
 			}
 
 			values[row][valTupleIndex] = transformationFunctionMap[fieldPattern.Type](value)
