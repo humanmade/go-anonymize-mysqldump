@@ -70,8 +70,7 @@ var (
 		"customRecoverToken":   generateCustomRecoverToken,
 		"customUserToken":      generateCustomUserToken,
 		"libAdditionalAddress": generateLibAdditionalAddress,
-		"customTitle":          generateCustomTitle,
-		"custom"
+		"customTitle":          generateCustomTitle
 	}
 )
 
