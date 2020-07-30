@@ -320,7 +320,12 @@ func modifyValues(values sqlparser.Values, pattern ConfigPattern) (sqlparser.Val
 			// Position is 1 indexed instead of 0, so let's subtract 1 in order to get
 			// it to line up with the value inside the ValTuple inside of values.Values
 			valTupleIndex := fieldPattern.Position - 1
-			value := values[row][valTupleIndex].(*sqlparser.SQLVal)
+			value, isNotNull := values[row][valTupleIndex].(*sqlparser.SQLVal)
+
+			// Skip transformation of null values
+			if !isNotNull {
+				continue
+			}
 
 			// Use provided string as value
 			if fieldPattern.Type == "custom" {
