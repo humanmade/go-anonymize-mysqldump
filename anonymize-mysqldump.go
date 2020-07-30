@@ -322,6 +322,12 @@ func modifyValues(values sqlparser.Values, pattern ConfigPattern) (sqlparser.Val
 			valTupleIndex := fieldPattern.Position - 1
 			value := values[row][valTupleIndex].(*sqlparser.SQLVal)
 
+			// Use provided string as value
+			if fieldPattern.Type == "custom" {
+				values[row][valTupleIndex] = generateCustomString(value, fieldPattern.String)
+				continue;
+			}
+
 			// Skip transformation if transforming function doesn't exist
 			if transformationFunctionMap[fieldPattern.Type] == nil {
 				// TODO in the event a transformation function isn't correctly defined,
@@ -342,12 +348,6 @@ func modifyValues(values sqlparser.Values, pattern ConfigPattern) (sqlparser.Val
 			// Skip this PatternField if none of its constraints match
 			if fieldPattern.Constraints != nil && !rowObeysConstraints(fieldPattern.Constraints, values[row]) {
 				continue
-			}
-
-			// Use provided string as value
-			if transformationFunctionMap[fieldPattern.Type] == "custom" {
-				values[row][valTupleIndex] = fieldPattern.String
-				continue;
 			}
 
 			values[row][valTupleIndex] = transformationFunctionMap[fieldPattern.Type](value)
