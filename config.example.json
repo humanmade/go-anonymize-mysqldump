@@ -112,7 +112,8 @@
         {
           "field": "comment_author_url",
           "position": 5,
-          "type": "url",
+          "type": "custom",
+          "string": "https://example.com/",
           "constraints": null
         },
         {
