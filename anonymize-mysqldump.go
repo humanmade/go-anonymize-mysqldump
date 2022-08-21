@@ -27,6 +27,7 @@ type PatternField struct {
 	Field       string                   `json:"field"`
 	Position    int                      `json:"position"`
 	Type        string                   `json:"type"`
+	String        string                   `json:"string"`
 	Constraints []PatternFieldConstraint `json:"constraints"`
 }
 
@@ -38,15 +39,38 @@ type PatternFieldConstraint struct {
 
 var (
 	transformationFunctionMap = map[string]func(*sqlparser.SQLVal) *sqlparser.SQLVal{
-		"username":  generateUsername,
-		"password":  generatePassword,
-		"email":     generateEmail,
-		"url":       generateURL,
-		"name":      generateName,
-		"firstName": generateFirstName,
-		"lastName":  generateLastName,
-		"paragraph": generateParagraph,
-		"ipv4":      generateIPv4,
+		"username":             generateUsername,
+		"password":             generatePassword,
+		"email":                generateEmail,
+		"url":                  generateURL,
+		"name":                 generateName,
+		"firstName":            generateFirstName,
+		"lastName":             generateLastName,
+		"paragraph":            generateParagraph,
+		"ipv4":                 generateIPv4,
+		"customPhoneNumber":    generateCustomPhoneNumber,
+		"customUserAgent":      generateCustomUserAgent,
+		"libPrefix":            generateLibPrefix,
+		"libCompanyName":       generateLibCompanyName,
+		"libStreet":            generateLibStreet,
+		"customStreet":         generateCustomStreet,
+		"libBuildingNumber":    generateLibBuildingNumber,
+		"libCity":              generateLibCity,
+		"libZip":               generateLibZip,
+		"libState":             generateLibState,
+		"libCountry":           generateLibCountry,
+		"customCountry":        generateCustomCountry,
+		"libParagraph":         generateLibParagraph,
+		"customSocialNetwork":  generateCustomSocialNetwork,
+		"customSocialId":       generateCustomSocialId,
+		"customSocialToken":    generateCustomSocialToken,
+		"libInternetUser":      generateLibInternetUser,
+		"customUniqueUser":     generateCustomUniqueUser,
+		"customPassword":       generateCustomPassword,
+		"customRecoverToken":   generateCustomRecoverToken,
+		"customUserToken":      generateCustomUserToken,
+		"libAdditionalAddress": generateLibAdditionalAddress,
+		"customTitle":          generateCustomTitle,
 	}
 )
 
@@ -296,7 +320,18 @@ func modifyValues(values sqlparser.Values, pattern ConfigPattern) (sqlparser.Val
 			// Position is 1 indexed instead of 0, so let's subtract 1 in order to get
 			// it to line up with the value inside the ValTuple inside of values.Values
 			valTupleIndex := fieldPattern.Position - 1
-			value := values[row][valTupleIndex].(*sqlparser.SQLVal)
+			value, isNotNull := values[row][valTupleIndex].(*sqlparser.SQLVal)
+
+			// Skip transformation of null values
+			if !isNotNull {
+				continue
+			}
+
+			// Use provided string as value
+			if fieldPattern.Type == "custom" {
+				values[row][valTupleIndex] = generateCustomString(value, fieldPattern.String)
+				continue;
+			}
 
 			// Skip transformation if transforming function doesn't exist
 			if transformationFunctionMap[fieldPattern.Type] == nil {
