@@ -1,0 +1,23 @@
+# github.com/akamensky/argparse v0.0.0-20191006154803-1427fe674291
+## explicit
+github.com/akamensky/argparse
+# github.com/konsorten/go-windows-terminal-sequences v1.0.2
+## explicit
+github.com/konsorten/go-windows-terminal-sequences
+# github.com/sirupsen/logrus v1.4.2
+## explicit
+github.com/sirupsen/logrus
+# github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2
+## explicit
+github.com/xwb1989/sqlparser
+github.com/xwb1989/sqlparser/dependency/bytes2
+github.com/xwb1989/sqlparser/dependency/hack
+github.com/xwb1989/sqlparser/dependency/querypb
+github.com/xwb1989/sqlparser/dependency/sqltypes
+# golang.org/x/sys v0.0.0-20191020212454-3e7259c5e7c2
+## explicit
+golang.org/x/sys/unix
+# syreclabs.com/go/faker v1.2.0
+## explicit
+syreclabs.com/go/faker
+syreclabs.com/go/faker/locales
